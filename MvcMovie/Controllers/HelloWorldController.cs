@@ -5,7 +5,7 @@ namespace MvcMovie.Controllers
 {
     public class HelloWorldController : Controller
     {
-        // 
+        // test comment
         // GET: /HelloWorld/
 
         public string Index()
