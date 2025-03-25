@@ -49,6 +49,13 @@ stages:
         publishWebProjects: true
         arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
         zipAfterPublish: True
+    - task: CmdLine@2
+      displayName: 'List Files in Staging Directory'
+      inputs:
+        script: |
+          echo 'Contents of $(Build.ArtifactStagingDirectory):'
+          dir $(Build.ArtifactStagingDirectory) /s
+        workingDirectory: '$(Build.ArtifactStagingDirectory)'
 
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Artifact: drop'
