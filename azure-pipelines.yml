@@ -1,0 +1,102 @@
+trigger:
+- main
+
+pool:
+  name: MySelfHostedAgentPool 
+
+variables:
+  buildConfiguration: 'Release'
+  solution: 'MvcMovie.sln'  
+
+stages:
+- stage: Build
+  displayName: Build the Application
+  jobs:
+  - job: Build
+    displayName: Build Job
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Use .NET 8.0'
+      inputs:
+        packageType: 'sdk'
+        version: '8.0.x'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore NuGet Packages'
+      inputs:
+        command: 'restore'
+        projects: '$(solution)'
+        feedsToUse: 'select'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Build Solution'
+      inputs:
+        command: 'build'
+        projects: '$(solution)'
+        arguments: '--configuration $(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Run Tests'
+      inputs:
+        command: 'test'
+        projects: '$(solution)'
+        arguments: '--configuration $(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish Web App'
+      inputs:
+        command: 'publish'
+        publishWebProjects: true
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        zipAfterPublish: True
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact: drop'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+- stage: Deploy
+  displayName: Deploy to Local Machine
+  dependsOn: Build  
+  condition: succeeded() 
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy Job
+    environment: 'LocalMachine'  
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download Build Artifacts'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'drop'
+              downloadPath: '$(System.ArtifactsDirectory)'
+
+          - task: ExtractFiles@1
+            displayName: 'Extract Publish Artifact'
+            inputs:
+              archiveFilePatterns: '$(System.ArtifactsDirectory)/drop/*.zip'
+              destinationFolder: '$(System.DefaultWorkingDirectory)/publish'
+              cleanDestinationFolder: true
+
+          - task: PowerShell@2
+            displayName: 'Deploy to IIS (PowerShell Script)'
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Stop the Default Web Site (if it's running)
+                Stop-WebSite -Name "Default Web Site"
+
+                # Remove existing files (ensure a clean deployment)
+                Remove-Item -Recurse -Force "C:\inetpub\wwwroot\*"
+
+                # Copy the published files to the IIS root
+                Copy-Item -Path "$(System.DefaultWorkingDirectory)/publish/*" -Destination "C:\inetpub\wwwroot" -Recurse -Force
+
+                # Start the Default Web Site
+                Start-WebSite -Name "Default Web Site"
