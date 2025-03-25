@@ -95,7 +95,7 @@ stages:
               targetType: 'inline'
               script: |
                 # Remove existing files
-                Remove-Item -Recurse -Force "C:\inetpub\wwwroot\*"
+                Remove-Item -Recurse -Force "C:\inetpub\wwwroot\*" -ErrorAction SilentlyContinue
 
                 # Copy the published files to IIS root
                 Copy-Item -Path "$(System.DefaultWorkingDirectory)/publish/*" -Destination "C:\inetpub\wwwroot" -Recurse -Force
