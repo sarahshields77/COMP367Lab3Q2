@@ -25,21 +25,21 @@ stages:
       displayName: 'Restore NuGet Packages'
       inputs:
         command: 'restore'
-        projects: 'MvcMovie/MvcMovie.csproj' # Corrected path
+        projects: 'MvcMovie/MvcMovie.csproj'
         feedsToUse: 'select'
 
     - task: DotNetCoreCLI@2
       displayName: 'Build Solution'
       inputs:
         command: 'build'
-        projects: '$(solution)'
+        projects: 'MvcMovie/MvcMovie.sln'
         arguments: '--configuration $(buildConfiguration)'
 
     - task: DotNetCoreCLI@2
       displayName: 'Run Tests'
       inputs:
         command: 'test'
-        projects: '$(solution)'
+        projects: 'MvcMovie/MvcMovie.csproj'
         arguments: '--configuration $(buildConfiguration)'
 
     - task: DotNetCoreCLI@2
