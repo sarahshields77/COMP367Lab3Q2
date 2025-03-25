@@ -94,14 +94,8 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                # Stop the Default Web Site (if it's running)
-                Stop-WebSite -Name "Default Web Site"
-
                 # Remove existing files
                 Remove-Item -Recurse -Force "C:\inetpub\wwwroot\*"
 
-                # Copy new published content
+                # Copy the published files to IIS root
                 Copy-Item -Path "$(System.DefaultWorkingDirectory)/publish/*" -Destination "C:\inetpub\wwwroot" -Recurse -Force
-
-                # Start the website
-                Start-WebSite -Name "Default Web Site"
