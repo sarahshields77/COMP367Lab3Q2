@@ -56,7 +56,7 @@ stages:
         script: |
           echo 'Contents of $(Build.ArtifactStagingDirectory):'
           dir $(Build.ArtifactStagingDirectory) /s
-      condition: always()  # Run even if previous tasks fail
+      condition: always()  
 
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Artifact: drop'
@@ -64,6 +64,7 @@ stages:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: 'Container'
+      condition: always()
 
 - stage: Deploy
   displayName: Deploy to Local Machine
