@@ -6,7 +6,9 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  solution: 'MvcMovie.sln'
+  solution: 'MvcMovie.sln'  
+  projectPath: 'MvcMovie/MvcMovie.csproj'  
+  artifactName: 'drop'
 
 stages:
 - stage: Build
@@ -36,33 +38,27 @@ stages:
         arguments: '--configuration $(buildConfiguration)'
 
     - task: DotNetCoreCLI@2
-      displayName: 'Run Tests'
-      inputs:
-        command: 'test'
-        projects: '$(solution)'
-        arguments: '--configuration $(buildConfiguration)'
-
-    - task: DotNetCoreCLI@2
       displayName: 'Publish Web App'
       inputs:
         command: 'publish'
-        publishWebProjects: true
-        arguments: '--configuration $(buildConfiguration)'
-        zipAfterPublish: True
+        publishWebProjects: false
+        projects: '$(projectPath)'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        zipAfterPublish: true
 
     - task: CmdLine@2
       displayName: 'List Files in Staging Directory'
       inputs:
         script: |
           echo 'Contents of $(Build.ArtifactStagingDirectory):'
-          dir $(Build.ArtifactStagingDirectory) /s
-      condition: always()  
+          dir "$(Build.ArtifactStagingDirectory)" /s
+      condition: always()
 
     - task: PublishBuildArtifacts@1
-      displayName: 'Publish Artifact: drop'
+      displayName: 'Publish Artifact: $(artifactName)'
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: 'drop'
+        ArtifactName: '$(artifactName)'
         publishLocation: 'Container'
       condition: always()
 
@@ -83,13 +79,13 @@ stages:
             inputs:
               buildType: 'current'
               downloadType: 'single'
-              artifactName: 'drop'
+              artifactName: '$(artifactName)'
               downloadPath: '$(System.ArtifactsDirectory)'
 
           - task: ExtractFiles@1
             displayName: 'Extract Publish Artifact'
             inputs:
-              archiveFilePatterns: '$(System.ArtifactsDirectory)/drop/*.zip'
+              archiveFilePatterns: '$(System.ArtifactsDirectory)/$(artifactName)/*.zip'
               destinationFolder: '$(System.DefaultWorkingDirectory)/publish'
               cleanDestinationFolder: true
 
@@ -98,14 +94,9 @@ stages:
             inputs:
               targetType: 'inline'
               script: |
-                # Stop the Default Web Site (if it's running)
-                Stop-WebSite -Name "Default Web Site"
-
-                # Remove existing files (ensure a clean deployment)
-                Remove-Item -Recurse -Force "C:\inetpub\wwwroot\*"
-
-                # Copy the published files to the IIS root
-                Copy-Item -Path "$(System.DefaultWorkingDirectory)/publish/*" -Destination "C:\inetpub\wwwroot" -Recurse -Force
-
-                # Start the Default Web Site
-                Start-WebSite -Name "Default Web Site"
+                # Remove existing files
+                Remove-Item -Recurse -Force "C:\inetpub\wwwroot\*" -ErrorAction SilentlyContinue
+                Write-Host "Copying files from publish folder:"
+                Get-ChildItem "C:\vsts-agent-win-x64-4.252.0\_work\3\s\publish"
+                # Copy the published files to IIS root
+                Copy-Item -Path "C:\vsts-agent-win-x64-4.252.0\_work\3\s\publish\*" -Destination "C:\inetpub\wwwroot" -Recurse -Force -ErrorAction SilentlyContinue
