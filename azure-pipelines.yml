@@ -6,7 +6,7 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  solution: 'MvcMovie.sln'
+  solution: 'MvcMovie/MvcMovie.sln'
 
 stages:
 - stage: Build
