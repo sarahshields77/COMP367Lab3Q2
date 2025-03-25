@@ -96,6 +96,8 @@ stages:
               script: |
                 # Remove existing files
                 Remove-Item -Recurse -Force "C:\inetpub\wwwroot\*" -ErrorAction SilentlyContinue
-
+                Write-Host "Copying files from publish folder:"
+                Get-ChildItem "C:\vsts-agent-win-x64-4.252.0\_work\3\s\publish"
                 # Copy the published files to IIS root
-                Copy-Item -Path "$(System.DefaultWorkingDirectory)/publish/*" -Destination "C:\inetpub\wwwroot" -Recurse -Force
+                Copy-Item -Path "C:\vsts-agent-win-x64-4.252.0\_work\3\s\publish\*" -Destination "C:\inetpub\wwwroot" -Recurse -Force -ErrorAction SilentlyContinue
+
