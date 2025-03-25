@@ -2,11 +2,11 @@ trigger:
 - main
 
 pool:
-  name: MySelfHostedAgentPool 
+  name: MySelfHostedAgentPool
 
 variables:
   buildConfiguration: 'Release'
-  solution: 'MvcMovie.sln'  
+  solution: 'MvcMovie.sln'
 
 stages:
 - stage: Build
@@ -49,13 +49,14 @@ stages:
         publishWebProjects: true
         arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
         zipAfterPublish: True
+
     - task: CmdLine@2
       displayName: 'List Files in Staging Directory'
       inputs:
         script: |
           echo 'Contents of $(Build.ArtifactStagingDirectory):'
           dir $(Build.ArtifactStagingDirectory) /s
-        workingDirectory: '$(Build.ArtifactStagingDirectory)'
+      condition: always()  # Run even if previous tasks fail
 
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Artifact: drop'
@@ -66,12 +67,12 @@ stages:
 
 - stage: Deploy
   displayName: Deploy to Local Machine
-  dependsOn: Build  
-  condition: succeeded() 
+  dependsOn: Build
+  condition: succeeded()
   jobs:
   - deployment: Deploy
     displayName: Deploy Job
-    environment: 'LocalMachine'  
+    environment: 'LocalMachine'
     strategy:
       runOnce:
         deploy:
